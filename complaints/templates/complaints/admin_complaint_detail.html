@@ -1,0 +1,232 @@
+{% extends 'complaints/base.html' %}
+
+{% block title %}Admin - Complaint #{{ complaint.id }} Details{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <a href="{% url 'admin_dashboard' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+            &larr; Back to Dashboard
+        </a>
+        <h1 style="font-size: 1.6rem; color: var(--text-dark); margin-top: 0.25rem;">
+            Complaint #{{ complaint.id }}: {{ complaint.title }}
+        </h1>
+    </div>
+    <div>
+        <span class="badge badge-{{ complaint.status|lower }}" style="font-size: 0.95rem; padding: 0.4rem 0.9rem;">
+            Current Status: {{ complaint.status }}
+        </span>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <!-- Left Column: Original Complaint Details & 1st AI Check -->
+    <div>
+        <div class="card">
+            <h2 class="card-title">Original Complaint Details</h2>
+            
+            <div style="margin-bottom: 1rem; line-height: 1.8;">
+                <strong>Complaint ID:</strong> #{{ complaint.id }}<br>
+                <strong>Submitted By:</strong> {{ complaint.user.first_name|default:complaint.user.username }}<br>
+                <strong>Email Address:</strong> {{ complaint.user.email }}<br>
+                <strong>Date Submitted:</strong> {{ complaint.created_at|date:"F d, Y \a\t H:i" }}
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label" style="color: var(--text-muted);">Title</label>
+                <div style="font-weight: 600; font-size: 1.05rem;">{{ complaint.title }}</div>
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="color: var(--text-muted);">Description</label>
+                <div style="background-color: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); white-space: pre-line;">
+                    {{ complaint.description }}
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label" style="color: var(--text-muted);">Original Complaint Image</label>
+                {% if complaint.image %}
+                <div class="image-preview-container">
+                    <img src="{{ complaint.image.url }}" alt="Original Complaint Image">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- First AI Verification Result Box -->
+        <div class="card" style="border-left: 4px solid var(--primary-color);">
+            <h2 class="card-title">First AI Verification (Complaint Authenticity)</h2>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>AI Status:</strong>
+                <span class="badge badge-{{ complaint.ai_verification_status|lower }}">
+                    {{ complaint.ai_verification_status }}
+                </span>
+            </div>
+            <p style="font-size: 0.95rem; background-color: #f1f5f9; padding: 0.75rem 1rem; border-radius: 6px; margin-top: 0.5rem;">
+                {{ complaint.ai_verification_reason|default:"Initial AI verification complete." }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Column: Admin Actions & Resolution Workflows -->
+    <div>
+        <!-- NEW STATUS: Take Complaint Action -->
+        {% if complaint.status == 'NEW' %}
+        <div class="card" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+            <h2 class="card-title" style="color: #1e40af;">Take Responsibility</h2>
+            <p style="color: #1e3a8a; margin-bottom: 1.25rem;">
+                This complaint is currently marked as <strong>NEW</strong>. Click below to take responsibility and move it to <strong>PENDING</strong> status.
+            </p>
+            <form method="post" action="{% url 'admin_take_complaint' complaint.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-block">
+                    Take Complaint (Move to PENDING)
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- PENDING STATUS: Resolution Submission & AI Verification -->
+        {% if complaint.status == 'PENDING' %}
+        
+            <!-- If 2nd AI check has NOT run yet or Admin wants to submit evidence -->
+            <div class="card">
+                <h2 class="card-title">Upload Resolution Evidence</h2>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                    Upload the resolution description and proof image to trigger 2nd AI verification specifically for Complaint #{{ complaint.id }}.
+                </p>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'admin_submit_resolution' complaint.pk %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Resolution Description</label>
+                        {{ resolution_form.resolution_description }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Resolution Evidence Image</label>
+                        <input type="file" name="resolution_image" class="form-file-input" accept="image/*" required data-preview-target="admin-res-preview">
+                        <div class="image-preview-container" style="margin-top: 0.75rem;">
+                            <img id="admin-res-preview" src="#" alt="Resolution Evidence Preview" style="display: none;">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+                        Run AI Resolution Verification
+                    </button>
+                </form>
+            </div>
+
+            <!-- 2nd AI Verification Results & Confirmation Options -->
+            {% if complaint.resolution_ai_status %}
+                {% if complaint.resolution_ai_status == 'PASS' %}
+                    <!-- AI PASS Section -->
+                    <div class="card" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1.5rem;">✅</span>
+                            <h2 class="card-title" style="color: #166534; margin-bottom: 0;">AI Verification Passed</h2>
+                        </div>
+                        <p style="color: #14532d; font-size: 0.95rem; margin-bottom: 1rem;">
+                            The resolution evidence provides reasonable visual support that Complaint #{{ complaint.id }} has been resolved.
+                        </p>
+                        <div style="background-color: #ffffff; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 1.25rem; font-size: 0.9rem; color: #334155;">
+                            <strong>AI Reason:</strong> {{ complaint.resolution_ai_reason }}
+                        </div>
+
+                        <form method="post" action="{% url 'admin_resolve_complaint' complaint.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-block" style="font-size: 1rem; padding: 0.9rem;">
+                                Resolve & Send Email Notification
+                            </button>
+                        </form>
+                    </div>
+
+                {% else %}
+                    <!-- AI FAIL or UNCERTAIN Section -->
+                    <div class="card" style="background-color: #fffbe6; border: 1px solid #fef08a;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="font-size: 1.5rem;">⚠️</span>
+                            <h2 class="card-title" style="color: #854d0e; margin-bottom: 0;">AI Verification {{ complaint.resolution_ai_status }}</h2>
+                        </div>
+                        <p style="color: #713f12; font-size: 0.95rem; margin-bottom: 1rem;">
+                            AI could not confidently verify that the complaint has been resolved.
+                        </p>
+                        <div style="background-color: #ffffff; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 1.25rem; font-size: 0.9rem; color: #334155;">
+                            <strong>AI Reason:</strong> {{ complaint.resolution_ai_reason }}
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <!-- Option 1: Re-upload evidence -->
+                            <a href="#admin-res-preview" class="btn btn-warning" style="flex: 1; text-align: center;">
+                                Option 1: Re-upload Evidence
+                            </a>
+                            <!-- Option 2: Confirm Manually (Triggers Password Modal) -->
+                            <button type="button" class="btn btn-secondary" style="flex: 1;" data-open-modal="manual-confirm-modal">
+                                Option 2: Confirm Manually
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+        {% endif %}
+
+        <!-- RESOLVED STATUS: Display Final Resolution Summary -->
+        {% if complaint.status == 'RESOLVED' %}
+        <div class="card" style="border-left: 4px solid #16a34a; background-color: #f0fdf4;">
+            <h2 class="card-title" style="color: #166534;">Complaint Resolved</h2>
+            <p style="margin-bottom: 1rem; color: #14532d;">
+                <strong>Resolved At:</strong> {{ complaint.resolved_at|date:"F d, Y \a\t H:i" }}
+            </p>
+
+            <div style="margin-bottom: 1rem;">
+                <label class="form-label" style="color: #15803d;">Resolution Notes</label>
+                <div style="background-color: #ffffff; padding: 1rem; border-radius: 6px; border: 1px solid #bbf7d0;">
+                    {{ complaint.resolution_description }}
+                </div>
+            </div>
+
+            {% if complaint.resolution_image %}
+            <div>
+                <label class="form-label" style="color: #15803d;">Resolution Evidence Image</label>
+                <div class="image-preview-container">
+                    <img src="{{ complaint.resolution_image.url }}" alt="Resolution Evidence">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Manual Confirmation Modal (Password Security Verification) -->
+<div class="modal-overlay" id="manual-confirm-modal">
+    <div class="modal-card">
+        <h2 style="font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--text-dark);">
+            Admin Authentication Required
+        </h2>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            To manually confirm resolution without AI verification pass, enter your admin account password.
+        </p>
+
+        <form method="post" action="{% url 'admin_manual_confirm' complaint.pk %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Admin Password</label>
+                {{ manual_form.admin_password }}
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-warning" style="flex: 1;">
+                    Confirm & Resolve
+                </button>
+                <button type="button" class="btn btn-secondary" data-close-modal style="flex: 1;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

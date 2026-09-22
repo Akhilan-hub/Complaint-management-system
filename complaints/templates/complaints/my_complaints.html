@@ -1,0 +1,73 @@
+{% extends 'complaints/base.html' %}
+
+{% block title %}My Complaints - Complaint Management System{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.6rem; color: var(--text-dark);">My Complaints</h1>
+        <p style="color: var(--text-muted);">
+            Complaints submitted by <strong>{{ user.first_name|default:user.username }}</strong>
+        </p>
+    </div>
+    <a href="{% url 'submit_complaint' %}" class="btn btn-primary">
+        + Submit Complaint
+    </a>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs" style="margin-bottom: 1rem;">
+    <a href="{% url 'my_complaints' %}?status=all" class="filter-tab {% if status_filter == 'all' %}active{% endif %}">All Complaints</a>
+    <a href="{% url 'my_complaints' %}?status=NEW" class="filter-tab {% if status_filter == 'NEW' %}active{% endif %}">New</a>
+    <a href="{% url 'my_complaints' %}?status=PENDING" class="filter-tab {% if status_filter == 'PENDING' %}active{% endif %}">Pending</a>
+    <a href="{% url 'my_complaints' %}?status=RESOLVED" class="filter-tab {% if status_filter == 'RESOLVED' %}active{% endif %}">Resolved</a>
+</div>
+
+<!-- Complaints Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        {% if complaints %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Complaint Title</th>
+                    <th>Date Submitted</th>
+                    <th>AI Check</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td><strong>#{{ complaint.id }}</strong></td>
+                    <td>{{ complaint.title }}</td>
+                    <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge badge-{{ complaint.ai_verification_status|lower }}">
+                            AI {{ complaint.ai_verification_status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ complaint.status|lower }}">
+                            {{ complaint.status }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'complaint_detail' complaint.pk %}" class="btn btn-secondary btn-sm">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+            No complaints found matching this filter.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

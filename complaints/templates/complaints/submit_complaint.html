@@ -1,0 +1,61 @@
+{% extends 'complaints/base.html' %}
+
+{% block title %}Submit Complaint - Complaint Management System{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 0 auto;">
+    <div style="margin-bottom: 1.5rem;">
+        <h1 style="font-size: 1.6rem; color: var(--text-dark);">Submit a New Complaint</h1>
+        <p style="color: var(--text-muted);">Describe the issue clearly and attach an authentic image for AI verification.</p>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data" action="{% url 'submit_complaint' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Complaint Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div style="color: #dc2626; font-size: 0.8rem; margin-top: 0.2rem;">
+                        {{ form.title.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Detailed Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div style="color: #dc2626; font-size: 0.8rem; margin-top: 0.2rem;">
+                        {{ form.description.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Complaint Image / Evidence</label>
+                <input type="file" name="image" class="form-file-input" accept="image/*" required data-preview-target="complaint-image-preview">
+                {% if form.image.errors %}
+                    <div style="color: #dc2626; font-size: 0.8rem; margin-top: 0.2rem;">
+                        {{ form.image.errors.0 }}
+                    </div>
+                {% endif %}
+
+                <div class="image-preview-container" style="margin-top: 0.75rem;">
+                    <img id="complaint-image-preview" src="#" alt="Image Preview" style="display: none;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Submit Complaint
+                </button>
+                <a href="{% url 'user_dashboard' %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Complaint Management System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'complaints/css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    {% if user.is_authenticated %}
+    <nav class="navbar">
+        <a href="{% if user.is_staff %}{% url 'admin_dashboard' %}{% else %}{% url 'user_dashboard' %}{% endif %}" class="navbar-brand">
+            🏛️ Complaint Management System
+        </a>
+        <ul class="nav-links">
+            {% if user.is_staff %}
+                <li><a href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
+            {% else %}
+                <li><a href="{% url 'user_dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'my_complaints' %}">My Complaints</a></li>
+                <li><a href="{% url 'submit_complaint' %}">Submit Complaint</a></li>
+            {% endif %}
+            <li>
+                <span class="user-badge">
+                    {% if user.is_staff %}
+                        🛡️ Admin: {{ user.get_full_name|default:user.username }}
+                    {% else %}
+                        👤 {{ user.get_full_name|default:user.username }} ({{ user.username }})
+                    {% endif %}
+                </span>
+            </li>
+            <li><a href="{% url 'logout' %}" style="color: #f87171;">Logout</a></li>
+        </ul>
+    </nav>
+    {% endif %}
+
+    <main class="{% block container_class %}container{% endblock %}">
+        {% block messages %}
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{% static 'complaints/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

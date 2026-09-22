@@ -1,0 +1,87 @@
+{% extends 'complaints/base.html' %}
+
+{% block title %}User Dashboard - Complaint Management System{% endblock %}
+
+{% block content %}
+<!-- Small Subtle Greeting -->
+<div style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.2rem;">
+    Hi, {{ user.first_name|default:user.username }} 👋
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.15rem;">User Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Track and manage your submitted complaints</p>
+    </div>
+    <a href="{% url 'submit_complaint' %}" class="btn btn-primary btn-sm">
+        + Submit New Complaint
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="stats-grid" style="margin-bottom: 1.25rem;">
+    <div class="stat-card">
+        <h3>Total Complaints</h3>
+        <div class="stat-number">{{ total_count }}</div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid #2563eb;">
+        <h3>New Complaints</h3>
+        <div class="stat-number" style="color: #2563eb;">{{ new_count }}</div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid #d97706;">
+        <h3>Pending</h3>
+        <div class="stat-number" style="color: #d97706;">{{ pending_count }}</div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid #16a34a;">
+        <h3>Resolved</h3>
+        <div class="stat-number" style="color: #16a34a;">{{ resolved_count }}</div>
+    </div>
+</div>
+
+<!-- Recent Complaints Table -->
+<div class="table-card">
+    <div class="table-header">
+        <h2 style="font-size: 1rem; font-weight: 700;">Your Recent Complaints</h2>
+        <a href="{% url 'my_complaints' %}" class="btn btn-secondary btn-xs">View All</a>
+    </div>
+
+    <div class="table-responsive">
+        {% if recent_complaints %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px;">ID</th>
+                    <th>Title</th>
+                    <th>Submitted On</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in recent_complaints %}
+                <tr>
+                    <td><strong>#{{ complaint.id }}</strong></td>
+                    <td>{{ complaint.title }}</td>
+                    <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge badge-{{ complaint.status|lower }}">
+                            {{ complaint.status }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'complaint_detail' complaint.pk %}" class="btn btn-secondary btn-xs">
+                            View Details
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+            You have not submitted any complaints yet. Click <strong>Submit New Complaint</strong> to file your first issue.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

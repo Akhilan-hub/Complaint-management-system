@@ -1,0 +1,107 @@
+{% extends 'complaints/base.html' %}
+
+{% block title %}Complaint #{{ complaint.id }} - Complaint Management System{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <a href="{% if user.is_staff %}{% url 'admin_dashboard' %}{% else %}{% url 'my_complaints' %}{% endif %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+            &larr; Back to List
+        </a>
+        <h1 style="font-size: 1.6rem; color: var(--text-dark); margin-top: 0.25rem;">
+            Complaint #{{ complaint.id }}: {{ complaint.title }}
+        </h1>
+    </div>
+    <div>
+        <span class="badge badge-{{ complaint.status|lower }}" style="font-size: 0.9rem; padding: 0.4rem 0.9rem;">
+            Status: {{ complaint.status }}
+        </span>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <!-- Left Column: Complaint Details & Original Image -->
+    <div>
+        <div class="card">
+            <h2 class="card-title">Complaint Information</h2>
+            
+            <div style="margin-bottom: 1rem; line-height: 1.8;">
+                <strong>Submitted By:</strong> {{ complaint.user.first_name|default:complaint.user.username }}<br>
+                <strong>Email Address:</strong> {{ complaint.user.email }}<br>
+                <strong>Submitted On:</strong> {{ complaint.created_at|date:"F d, Y \a\t H:i" }}
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="color: var(--text-muted);">Description</label>
+                <div style="background-color: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); white-space: pre-line;">
+                    {{ complaint.description }}
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label" style="color: var(--text-muted);">Submitted Evidence Image</label>
+                {% if complaint.image %}
+                <div class="image-preview-container">
+                    <img src="{{ complaint.image.url }}" alt="Complaint Image">
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted);">No image attached.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 1st AI Verification Result -->
+        <div class="card">
+            <h2 class="card-title">AI Authenticity Verification</h2>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>AI Status:</strong>
+                <span class="badge badge-{{ complaint.ai_verification_status|lower }}">
+                    {{ complaint.ai_verification_status }}
+                </span>
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-dark); background-color: #f1f5f9; padding: 0.75rem 1rem; border-radius: 6px;">
+                {{ complaint.ai_verification_reason|default:"Initial verification pending." }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Column: Resolution Details (If available) -->
+    <div>
+        {% if complaint.status == 'RESOLVED' %}
+        <div class="card" style="border-left: 4px solid #16a34a;">
+            <h2 class="card-title" style="color: #166534;">Resolution Details</h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>Resolved On:</strong> {{ complaint.resolved_at|date:"F d, Y \a\t H:i" }}
+            </div>
+
+            <div style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="color: var(--text-muted);">Admin Resolution Notes</label>
+                <div style="background-color: #f0fdf4; padding: 1rem; border-radius: 6px; border: 1px solid #bbf7d0; white-space: pre-line;">
+                    {{ complaint.resolution_description }}
+                </div>
+            </div>
+
+            {% if complaint.resolution_image %}
+            <div>
+                <label class="form-label" style="color: var(--text-muted);">Resolution Evidence Image</label>
+                <div class="image-preview-container">
+                    <img src="{{ complaint.resolution_image.url }}" alt="Resolution Evidence Image">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="card" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
+            <h3 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem;">Complaint Under Review</h3>
+            {% if complaint.status == 'NEW' %}
+                <p>Your complaint has been logged and is awaiting admin review.</p>
+            {% else %}
+                <p>An administrator has taken responsibility for this complaint and is actively working on resolution.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
