@@ -1,11 +1,15 @@
 import io
+import tempfile
+import shutil
 from PIL import Image
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core import mail
 from complaints.models import Complaint
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 
 def generate_test_image(filename='test_image.png'):
     file_obj = io.BytesIO()
@@ -14,7 +18,13 @@ def generate_test_image(filename='test_image.png'):
     file_obj.seek(0)
     return SimpleUploadedFile(filename, file_obj.read(), content_type='image/png')
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class ComplaintSystemTestCase(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     def setUp(self):
         # Create regular user and admin user
         self.regular_user = User.objects.create_user(
