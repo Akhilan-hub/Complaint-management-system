@@ -41,7 +41,7 @@ def _send_resolution_email(complaint):
     Triggers an email notification to the user upon complaint resolution.
     """
     if not complaint.user.email:
-        return
+        pass
 
     display_name = complaint.user.first_name or complaint.user.username
     subject = f"Complaint #{complaint.id} - Resolution Update"

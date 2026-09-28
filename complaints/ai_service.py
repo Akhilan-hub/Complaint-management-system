@@ -66,9 +66,9 @@ Complaint Title: {title}
 Complaint Description: {description}
 
 Evaluate whether the uploaded image reasonably relates to and supports the reported complaint.
-- Return "PASS" if the image clearly matches or supports the complaint issue.
-- Return "FAIL" if the image is completely unrelated, fake, spam, or nonsense.
-- Return "UNCERTAIN" if the image is ambiguous, blurry, or partially unclear.
+- Return "PASS" if the image reasonably matches or supports the complaint issue.
+- Return "UNCERTAIN" if the image is ambiguous, blurry, or partially unclear. Reason must state: "AI could not conclusively verify this photo. Please review manually."
+- ONLY return "FAIL" if the image is completely fake, spam, or totally unrelated nonsense (e.g. a random cartoon or meme).
 
 Respond ONLY with a valid JSON object in this format:
 {{
@@ -143,11 +143,10 @@ Original Complaint Description: {description}
 Admin Resolution Description: {resolution_description}
 
 Instructions:
-Compare the original complaint and its image with the admin's resolution description and resolution evidence image.
-Determine if the resolution evidence provides reasonable visual support that the specific complaint was addressed or resolved.
-- Return "PASS" if the resolution image and description reasonably show the reported problem has been resolved.
-- Return "FAIL" if the resolution image clearly fails to show resolution or is completely unrelated.
-- Return "UNCERTAIN" if evidence is inconclusive, ambiguous, or lacks clear context.
+1. Compare the original complaint and its image with the admin's resolution description and resolution evidence image.
+2. Return "PASS" if the resolution image and description reasonably show or suggest the reported problem has been fixed or addressed.
+3. Return "UNCERTAIN" if you are unsure, if the camera angle/lighting differs, or if the evidence cannot be 100% conclusively verified automatically. Reason must state: "AI could not conclusively process this photo. Please review manually and confirm."
+4. ONLY return "FAIL" if the resolution image is completely fake, spam, or totally unrelated to any fix (e.g. a random animal or cartoon).
 
 Respond ONLY with a valid JSON object in this format:
 {{
